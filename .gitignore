@@ -1,0 +1,6 @@
+.DS_Store
+.venv/
+.cache/
+backups/
+src/.fontcache/
+__pycache__/

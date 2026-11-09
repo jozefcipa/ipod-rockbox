@@ -1,0 +1,37 @@
+Classic Revival - known issues
+==============================
+
+Inherited from iClassic 1.1 (Humberto Santana):
+
+The perspective effect on the Now Playing album art is an illusion: the
+square cover is covered by a "perspective frame", and the reflection is a
+fixed image. It works on most covers, but:
+
+1. When a track starts, the art can show square for a moment before the
+   frame is drawn.
+2. Very dark or near-white covers can look a little "scratchy" along the
+   top and bottom edges.
+3. Covers with strong horizontal lines, frames or borders can break the
+   illusion.
+
+New in Classic Revival:
+
+4. The ">" chevrons are chosen from the icon Rockbox gives each list item,
+   so a few items differ from stock (for example the entries in the System
+   menu have none, because Rockbox treats them as actions).
+5. Dialogs shown while the main menu is open (for example "Database is not
+   ready") are drawn inside the left half, because the skin cannot tell them
+   apart from the menu itself.
+6. "Database" is renamed to "Music" (as on stock) on the main menu item and
+   the database browser's title only; the Database entry in Settings >
+   General Settings keeps its name. Screen titles are translated through
+   Rockbox's language files, but "Unknown Artist" and "Unknown Album" on Now
+   Playing are always in English, as Rockbox has no translation for them.
+7. The soft shadow at the edge of the artwork pane is not drawn over album
+   art (Rockbox blends transparent images against the backdrop, not against
+   the album art).
+8. On the iPod Video the FM Radio screen needs the iPod Radio Remote, which
+   cannot report signal strength, so no signal meter is shown.
+
+Fixed in Classic Revival: menu text being clipped after a track change, and
+the battery icon disappearing on Now Playing at 96-100% charge.

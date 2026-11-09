@@ -1,0 +1,97 @@
+# Theme: Classic Revival 1.1.1 (2026) by Doug Belshaw
+# Licence: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/), see README.md
+# https://framagit.org/dajbelshaw/rockbox-classic-revival
+#
+# Based on iClassic 1.1 (2011) by Humberto Santana (humbertosantana@hotmail.com), CC BY-SA 3.0,
+# which derived a few elements from iLike for 320x240 by Alan Brito, ported from the 176x132 version by H. Pearce.
+# Attribution: "Modified/Derived from iClassic theme for iPod Video (CC-BY-SA 3.0) by Humberto Santana"
+#
+# SBS File (menus, browsers and every other non-WPS screen)
+#
+# Layout follows the stock iPod classic firmware:
+#  - The main menu uses the split screen: list on the left half, title
+#    bar only over the list, artwork on the right half (album art while
+#    playing, otherwise the music note pane).
+#  - Everything else (file browser, database, playlists, plugins, dialogs) is
+#    full width with a centred title, like the stock second-level lists.
+#  - List rows are drawn by the skin (%Lb): 24px rows, 8px inset, blue
+#    gradient selector and the ">" chevron on items that open another list.
+#  - Long full-width lists get a slim scrollbar on the right edge.
+#
+%wd
+%Fl(2,14-NimbusSans-Bold.fnt,900)
+%Fl(3,24-ClassicRevival-Spacer.fnt)
+%xl(P,Pane.bmp,0,0)
+%xl(B,Battery.bmp,0,0,24)
+%xl(h,Hold Icon.bmp,0,1)
+%xl(p,Playing Status.bmp,0,0,4)
+%xl(c,Chevron.bmp,147,6,2)
+%xl(d,Chevron.bmp,299,6,2)
+%xl(T,ScrollTrack.bmp,0,0)
+%xl(t,ScrollThumb.bmp,0,0)
+%Cl(-40,0,240,240,c,c)
+#
+# Layout: split for the main menu (1), full width everywhere else. Full-width
+# browsers (playlist viewer 5, files 7, database 8, plugins 9, playlists 13) use
+# row set f; full-width menus (Settings, System, context menus...) use row set m.
+%?if(%cs,=,1)<%Vd(split)%VI(split)%Lb(s,160,24)|%Vd(full)%VI(full)%?if(%cs,=,5)<%Lb(f,320,24)|%?if(%cs,=,7)<%Lb(f,320,24)|%?if(%cs,=,8)<%Lb(f,320,24)|%?if(%cs,=,9)<%Lb(f,320,24)|%?if(%cs,=,13)<%Lb(f,320,24)|%Lb(m,320,24)>>>>>>
+#
+# ---------- UI viewports (where Rockbox draws lists and other screens) ----------
+%Vi(split,0,19,160,221,1)%Vf(000000)%Vb(FFFFFF)
+%Vi(full,0,19,320,221,1)%Vf(000000)%Vb(FFFFFF)
+#
+# ---------- Split layout: right-hand pane ----------
+# Artwork pane (with the list's soft shadow baked in) or album art
+%Vl(split,160,0,160,240,-)
+%?C<|%xd(P)>
+%Vl(split,160,0,160,240,-)
+%?C<%Cd|>
+#
+# ---------- Scrollbar for long full-width lists ----------
+# Drawn over the right edge of the list, so the selector appears to end at it.
+%Vl(full,313,20,7,219,-)
+%?LB<%LB(0,0,7,219,nobar,backdrop,T,slider,t,vertical,invert)|>
+#
+# ---------- List rows ----------
+# Each 24px row is two viewports: the whole row (font 3 is 24px tall, so one
+# gradient line fills it when selected) with the ">" chevron image, then the
+# text inset 8px and centred vertically, filled with the matching slice of the
+# gradient (rows 5-19) so the selector reads as one bar.
+#
+# Split layout (160 wide). Chevron on everything except plain settings (17)
+# and actions (18), as in the stock menus. "Database" reads "Music" here only,
+# so Settings > General Settings > Database keeps its real name.
+%Vl(s,0,0,160,24,3)%Vg(6BA6DE,186DBD,FFFFFF)
+%?Lc<%Vs(gradient) %?if(%LI,=,17)<|%?if(%LI,=,18)<|%xd(cb)>>|%?if(%LI,=,17)<|%?if(%LI,=,18)<|%xd(ca)>>>
+%Vl(s,8,5,134,15,-)%Vg(599AD7,2677C3,FFFFFF)
+%?Lc<%Vs(gradient)%s%?if(%LT,=,%Sx(Database))<%Sx(Music)|%LT>|%?if(%LT,=,%Sx(Database))<%Sx(Music)|%LT>>
+#
+# Full-width browsers (320 wide). Chevron only on things that open another list:
+# folders (1), playlists (2), submenus and menu categories (19-30).
+%Vl(f,0,0,320,24,3)%Vg(6BA6DE,186DBD,FFFFFF)
+%?Lc<%Vs(gradient) %?if(%LI,=,1)<%xd(db)|%?if(%LI,=,2)<%xd(db)|%?if(%LI,>,18)<%?if(%LI,<,31)<%xd(db)|>|>>>|%?if(%LI,=,1)<%xd(da)|%?if(%LI,=,2)<%xd(da)|%?if(%LI,>,18)<%?if(%LI,<,31)<%xd(da)|>|>>>>
+%Vl(f,8,5,286,15,-)%Vg(599AD7,2677C3,FFFFFF)
+%?Lc<%Vs(gradient)%s%LT|%LT>
+#
+# Full-width menus (320 wide): same chevron rule as the split main menu.
+%Vl(m,0,0,320,24,3)%Vg(6BA6DE,186DBD,FFFFFF)
+%?Lc<%Vs(gradient) %?if(%LI,=,17)<|%?if(%LI,=,18)<|%xd(db)>>|%?if(%LI,=,17)<|%?if(%LI,=,18)<|%xd(da)>>>
+%Vl(m,8,5,286,15,-)%Vg(599AD7,2677C3,FFFFFF)
+%?Lc<%Vs(gradient)%s%LT|%LT>
+#
+# ---------- Title bar ----------
+# Split: title on the left, play state and battery at the right of the left half.
+# Full: centred title, play state and battery at the right edge.
+# The database browser (8) is titled "Music"; the Database settings menu is not.
+%Vl(split,8,3,104,14,2)%Vf(000000)
+%s%al%?if(%Li,=,33)<iPod|%?Lt<%?if(%Lt,=,%Sx(Database))<%?if(%cs,=,8)<%Sx(Music)|%Lt>|%Lt>|%?cs<iPod||%Sx(Recording)|%Sx(FM Radio)|%Sx(Playlist)|%Sx(Settings)|%Sx(Files)|%Sx(Music)|%Sx(Plugins)|%Sx(Settings)|%Sx(Pitch)|%Sx(Settings)|%Sx(Playlists)|%Sx(Plugins)|%Sx(Context Menu)|%Sx(System)|%Sx(Time & Date)|%Sx(Bookmarks)|%Sx(Shortcuts)|%Sx(Track Info)|USB|iPod>>>
+%Vl(full,48,3,218,14,2)%Vf(000000)
+%s%ac%?if(%Li,=,33)<iPod|%?Lt<%?if(%Lt,=,%Sx(Database))<%?if(%cs,=,8)<%Sx(Music)|%Lt>|%Lt>|%?cs<iPod||%Sx(Recording)|%Sx(FM Radio)|%Sx(Playlist)|%Sx(Settings)|%Sx(Files)|%Sx(Music)|%Sx(Plugins)|%Sx(Settings)|%Sx(Pitch)|%Sx(Settings)|%Sx(Playlists)|%Sx(Plugins)|%Sx(Context Menu)|%Sx(System)|%Sx(Time & Date)|%Sx(Bookmarks)|%Sx(Shortcuts)|%Sx(Track Info)|USB|iPod>>>
+%Vl(split,131,4,25,11,-)
+%?bp<%?bc<%t(1.0)%xd(Ba);%t(1.0)%xd(Bb)|%xd(Bc)>|%?bl<%xd(Bd)|%xd(Bd)|%xd(Be)|%xd(Bf)|%xd(Bg)|%xd(Bh)|%xd(Bi)|%xd(Bj)|%xd(Bk)|%xd(Bl)|%xd(Bm)|%xd(Bn)|%xd(Bo)|%xd(Bp)|%xd(Bq)|%xd(Br)|%xd(Bs)|%xd(Bt)|%xd(Bu)|%xd(Bv)|%xd(Bw)|%xd(Bx)|%xd(Bx)>>
+%Vl(full,291,4,25,11,-)
+%?bp<%?bc<%t(1.0)%xd(Ba);%t(1.0)%xd(Bb)|%xd(Bc)>|%?bl<%xd(Bd)|%xd(Bd)|%xd(Be)|%xd(Bf)|%xd(Bg)|%xd(Bh)|%xd(Bi)|%xd(Bj)|%xd(Bk)|%xd(Bl)|%xd(Bm)|%xd(Bn)|%xd(Bo)|%xd(Bp)|%xd(Bq)|%xd(Br)|%xd(Bs)|%xd(Bt)|%xd(Bu)|%xd(Bv)|%xd(Bw)|%xd(Bx)|%xd(Bx)>>
+%Vl(split,113,3,16,13,-)
+%?mh<%xd(h)|%?mp<|%xd(pa)|%xd(pb)|%xd(pc)|%xd(pd)|%xd(pa)|%xd(pb)|%xd(pa)|%xd(pb)>>
+%Vl(full,271,3,16,13,-)
+%?mh<%xd(h)|%?mp<|%xd(pa)|%xd(pb)|%xd(pc)|%xd(pd)|%xd(pa)|%xd(pb)|%xd(pa)|%xd(pb)>>
