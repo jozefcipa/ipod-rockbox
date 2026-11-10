@@ -18,12 +18,17 @@ CACHE = SRC / '.fontcache'
 W, H = 320, 240
 SS = 4  # supersampling for shapes and icons
 
-# Rockbox list icon ids (apps/gui/icon.h enum themable_icons) -> our icon shape. Unlisted ids get no icon.
-ICONS = {0: 'note', 1: 'folder', 2: 'playlist', 8: 'gear', 9: 'plugins', 10: 'star', 17: 'toggle',
-         18: 'ring', 19: 'chevron', 20: 'gear', 23: 'gear', 24: 'system', 25: 'nowplaying', 29: 'folder'}
+# Rockbox list icon ids (apps/gui/icon.h enum themable_icons) -> our icon shape, one per id 0-31
+ICONS = {0: 'note', 1: 'folder', 2: 'playlist', 3: 'cursor', 4: 'nowplaying', 5: 'chip', 6: 'font',
+         7: 'globe', 8: 'gear', 9: 'plugins', 10: 'bookmark', 11: 'star', 12: 'queue', 13: 'move',
+         14: 'keyboard', 15: 'cursor_l', 16: 'question', 17: 'toggle', 18: 'ring', 19: 'chevron', 20: 'gear',
+         21: 'mic', 22: 'speaker', 23: 'gear', 24: 'system', 25: 'nowplaying', 26: 'display', 27: 'display',
+         28: 'radio', 29: 'folder', 30: 'eq', 31: 'rockbox'}
+assert sorted(ICONS) == list(range(32)), 'every Rockbox icon id needs a shape'
+NOICON_ID = 8  # rows with no icon (-1) draw this slot: the gear
 # Main menu rows with the icon id Rockbox gives each (apps/root_menu.c)
-MENU = [('Files', 29), ('Database', 0), ('Now Playing', 25), ('Settings', 20), ('Playlists', 2),
-        ('Plugins', 9), ('System', 24), ('Shortcuts', 10)]
+# (matches settings/my-settings.cfg root menu order)
+MENU = [('Database', 0), ('Now Playing', 25), ('Settings', 20), ('Playlists', 2), ('Plugins', 9), ('System', 24)]
 SONG = dict(title='Midnight City', artist='M83', album="Hurry Up, We're Dreaming", next='Wait', pos=102, len=243)
 
 
@@ -84,9 +89,9 @@ def vgradient(top, bottom, stop=H):
     return img
 
 
-def icon(kind, n, color, dot=False, pad=0):
-    '''Vector-ish icon drawn at SS x and downsampled. pad adds room below for the "active" dot.'''
-    img = Image.new('RGBA', (n * SS, (n + pad) * SS), (0, 0, 0, 0))
+def icon(kind, n, color):
+    '''Vector-ish icon drawn at SS x and downsampled.'''
+    img = Image.new('RGBA', (n * SS, n * SS), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     u = lambda *v: [x * n * SS for x in v]
     lw = max(SS, round(n * SS * 0.1))
@@ -98,17 +103,6 @@ def icon(kind, n, color, dot=False, pad=0):
     elif kind in ('next', 'prev'):
         d.polygon(u(0.1, 0.14, 0.72, 0.5, 0.1, 0.86), fill=color)
         d.rounded_rectangle(u(0.74, 0.14, 0.88, 0.86), radius=lw // 3, fill=color)
-    elif kind == 'shuffle':
-        d.line(u(0.06, 0.3, 0.32, 0.3, 0.62, 0.7, 0.8, 0.7), fill=color, width=lw, joint='curve')
-        d.line(u(0.06, 0.7, 0.32, 0.7, 0.62, 0.3, 0.8, 0.3), fill=color, width=lw, joint='curve')
-        d.polygon(u(0.76, 0.14, 0.98, 0.3, 0.76, 0.46), fill=color)
-        d.polygon(u(0.76, 0.54, 0.98, 0.7, 0.76, 0.86), fill=color)
-    elif kind in ('repeat', 'repeat1'):
-        d.rounded_rectangle(u(0.08, 0.26, 0.92, 0.8), radius=n * SS * 0.18, outline=color, width=lw)
-        d.rectangle(u(0.46, 0.16, 0.6, 0.36), fill=(0, 0, 0, 0))
-        d.polygon(u(0.46, 0.08, 0.66, 0.26, 0.46, 0.44), fill=color)
-        if kind == 'repeat1':
-            d.rectangle(u(0.45, 0.42, 0.57, 0.66), fill=color)
     elif kind == 'folder':
         d.rounded_rectangle(u(0.06, 0.18, 0.46, 0.4), radius=lw, fill=color)
         d.rounded_rectangle(u(0.06, 0.3, 0.94, 0.84), radius=lw, fill=color)
@@ -155,19 +149,82 @@ def icon(kind, n, color, dot=False, pad=0):
         d.ellipse(u(0.16, 0.6, 0.5, 0.9), fill=color)
         d.rectangle(u(0.41, 0.1, 0.5, 0.75), fill=color)
         d.polygon(u(0.5, 0.1, 0.84, 0.22, 0.84, 0.38, 0.5, 0.27), fill=color)
-    if dot:
-        cx, cy, r = n * SS / 2, (n + pad / 2 + 0.5) * SS, 1.5 * SS
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
-    img = img.resize((n, n + pad), Image.LANCZOS)
-    return img.transpose(Image.FLIP_LEFT_RIGHT) if kind == 'prev' else img
+    elif kind in ('cursor', 'cursor_l'):
+        d.polygon(u(0.3, 0.2, 0.75, 0.5, 0.3, 0.8), fill=color)
+    elif kind == 'bookmark':
+        d.polygon(u(0.24, 0.08, 0.76, 0.08, 0.76, 0.92, 0.5, 0.68, 0.24, 0.92), fill=color)
+    elif kind == 'chip':
+        d.rounded_rectangle(u(0.24, 0.24, 0.76, 0.76), radius=lw // 2, fill=color)
+        for k in (0.36, 0.64):
+            for box in ((k - 0.05, 0.06, k + 0.05, 0.3), (k - 0.05, 0.7, k + 0.05, 0.94),
+                        (0.06, k - 0.05, 0.3, k + 0.05), (0.7, k - 0.05, 0.94, k + 0.05)):
+                d.rectangle(u(*box), fill=color)
+    elif kind == 'font':
+        d.line(u(0.14, 0.9, 0.5, 0.1, 0.86, 0.9), fill=color, width=round(lw * 1.3), joint='curve')
+        d.line(u(0.3, 0.62, 0.7, 0.62), fill=color, width=lw)
+    elif kind == 'globe':
+        d.ellipse(u(0.08, 0.08, 0.92, 0.92), outline=color, width=lw)
+        d.ellipse(u(0.33, 0.08, 0.67, 0.92), outline=color, width=max(SS, round(lw * 0.8)))
+        d.line(u(0.08, 0.5, 0.92, 0.5), fill=color, width=max(SS, round(lw * 0.8)))
+    elif kind == 'queue':
+        for box in ((0.08, 0.16, 0.88, 0.28), (0.08, 0.42, 0.5, 0.54), (0.08, 0.68, 0.5, 0.8)):
+            d.rounded_rectangle(u(*box), radius=lw // 2, fill=color)
+        d.rectangle(u(0.6, 0.6, 0.94, 0.72), fill=color)
+        d.rectangle(u(0.71, 0.49, 0.83, 0.83), fill=color)
+    elif kind == 'move':
+        d.polygon(u(0.5, 0.04, 0.84, 0.38, 0.16, 0.38), fill=color)
+        d.polygon(u(0.16, 0.62, 0.84, 0.62, 0.5, 0.96), fill=color)
+        d.rectangle(u(0.43, 0.3, 0.57, 0.7), fill=color)
+    elif kind == 'keyboard':
+        d.rounded_rectangle(u(0.02, 0.2, 0.98, 0.8), radius=lw, fill=color)
+        for r in range(2):
+            for c in range(4):
+                x, y = 0.13 + c * 0.2, 0.3 + r * 0.17
+                d.rectangle(u(x, y, x + 0.1, y + 0.1), fill=(0, 0, 0, 0))
+        d.rectangle(u(0.28, 0.63, 0.72, 0.7), fill=(0, 0, 0, 0))
+    elif kind == 'question':
+        d.ellipse(u(0.06, 0.06, 0.94, 0.94), fill=color)
+        d.arc(u(0.33, 0.2, 0.67, 0.52), start=180, end=90, fill=(0, 0, 0, 0), width=lw)
+        d.rectangle(u(0.44, 0.48, 0.56, 0.62), fill=(0, 0, 0, 0))
+        d.ellipse(u(0.43, 0.67, 0.57, 0.81), fill=(0, 0, 0, 0))
+    elif kind == 'mic':
+        d.rounded_rectangle(u(0.34, 0.04, 0.66, 0.58), radius=n * SS * 0.16, fill=color)
+        d.arc(u(0.2, 0.26, 0.8, 0.74), start=0, end=180, fill=color, width=lw)
+        d.rectangle(u(0.45, 0.72, 0.55, 0.88), fill=color)
+        d.rounded_rectangle(u(0.3, 0.85, 0.7, 0.95), radius=lw // 3, fill=color)
+    elif kind == 'speaker':
+        d.polygon(u(0.06, 0.36, 0.28, 0.36, 0.52, 0.12, 0.52, 0.88, 0.28, 0.64, 0.06, 0.64), fill=color)
+        d.arc(u(0.36, 0.3, 0.76, 0.7), start=-55, end=55, fill=color, width=max(SS, round(lw * 0.8)))
+        d.arc(u(0.3, 0.12, 0.96, 0.88), start=-55, end=55, fill=color, width=max(SS, round(lw * 0.8)))
+    elif kind == 'display':
+        d.rounded_rectangle(u(0.04, 0.12, 0.96, 0.7), radius=lw, outline=color, width=lw)
+        d.rectangle(u(0.44, 0.68, 0.56, 0.82), fill=color)
+        d.rounded_rectangle(u(0.26, 0.8, 0.74, 0.9), radius=lw // 3, fill=color)
+    elif kind == 'radio':
+        d.line(u(0.22, 0.38, 0.74, 0.08), fill=color, width=max(SS, round(lw * 0.8)))
+        d.rounded_rectangle(u(0.04, 0.34, 0.96, 0.92), radius=lw, fill=color)
+        d.ellipse(u(0.56, 0.48, 0.84, 0.76), fill=(0, 0, 0, 0))
+        for y in (0.48, 0.6, 0.72):
+            d.rectangle(u(0.16, y, 0.46, y + 0.06), fill=(0, 0, 0, 0))
+    elif kind == 'eq':
+        for i, k in enumerate((0.64, 0.3, 0.52)):
+            x = 0.2 + i * 0.3
+            d.rectangle(u(x - 0.04, 0.06, x + 0.04, 0.94), fill=color)
+            d.rounded_rectangle(u(x - 0.13, k - 0.09, x + 0.13, k + 0.09), radius=lw // 2, fill=color)
+    elif kind == 'rockbox':
+        d.polygon(u(0.5, 0.04, 0.92, 0.27, 0.92, 0.73, 0.5, 0.96, 0.08, 0.73, 0.08, 0.27), fill=color)
+        d.line(u(0.08, 0.27, 0.5, 0.5, 0.92, 0.27), fill=(0, 0, 0, 0), width=max(SS, round(lw * 0.6)))
+        d.line(u(0.5, 0.5, 0.5, 0.96), fill=(0, 0, 0, 0), width=max(SS, round(lw * 0.6)))
+    img = img.resize((n, n), Image.LANCZOS)
+    return img.transpose(Image.FLIP_LEFT_RIGHT) if kind in ('prev', 'cursor_l') else img
 
 
 def icon_strip(color, under=None, n=16):
     '''All 32 list icons stacked vertically, indexed by Rockbox icon id. under: flat colour to blend
     onto (smooth edges), or None for hard edges on magenta when the background varies.'''
     strip = Image.new('RGB', (n, n * 32), (255, 0, 255))
-    for i, kind in ICONS.items():
-        ic = icon(kind, n, color)
+    for i in range(32):
+        ic = icon(ICONS[i], n, color)
         if under:
             tile = Image.new('RGBA', (n, n), rgb(under))
             tile.alpha_composite(ic)
@@ -188,6 +245,25 @@ def disc(n, color, inner, inner_color):
     ic = icon(inner, k, inner_color)
     img.alpha_composite(ic, ((n - k) // 2 + (1 if inner == 'play' else 0), (n - k) // 2))
     return img
+
+
+def battery(color, levels=11, low=(255, 69, 58, 255), charging=(48, 209, 88, 255)):
+    '''Battery icon frames for Skin.image: one per fill level (empty..full), then a charging frame.
+    Charging is a full green battery, like iOS (a bolt is unreadable at 12px). Returns (frames, display). %?bl splits 0-100% evenly over its options; %?bp is "charger plugged in".'''
+    w, h = 24, 12
+    def frame(frac, fill=None):
+        img = Image.new('RGBA', (w * SS, h * SS), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        d.rounded_rectangle((0, SS, 21 * SS, 11 * SS - 1), radius=3 * SS, outline=color, width=SS)
+        d.rounded_rectangle((22 * SS, 4 * SS, 24 * SS - 1, 8 * SS), radius=SS, fill=color)
+        if frac > 0:
+            fill = fill or (low if frac <= 0.2 else color)
+            d.rounded_rectangle((2 * SS, 3 * SS, 2 * SS + round(17 * SS * frac), 9 * SS - 1), radius=SS, fill=fill)
+        return img.resize((w, h), Image.LANCZOS)
+    frames = [frame(i / (levels - 1)) for i in range(levels)] + [frame(1, charging)]
+    letters = 'abcdefghijklmnopqrstuvwxyz'
+    level = '|'.join(f'{{{c}}}' for c in letters[:levels])
+    return frames, f'%?bp<{{{letters[levels]}}}|%?bl<{level}>>'
 
 
 def knob(n, color):
@@ -285,7 +361,7 @@ class Skin:
         self.files[file] = strip
         self.head.append(f'%xl({label},{file},{x},{y},{len(frames)})')
         self.mock.paste(strip.crop((0, show * fh, fw, show * fh + fh)), (ax, ay))
-        subs = {c: f'%xd({label}{c})' for c in 'abcdefgh'[:len(frames)]}
+        subs = {c: f'%xd({label}{c})' for c in 'abcdefghijklmnopqrstuvwxyz'[:len(frames)]}
         return display.format(**subs)
 
     def bar(self, file, w, h, fill, frac, knob_img=None):
@@ -319,17 +395,18 @@ class Skin:
         Each row is two viewports sharing label "r": the first draws the selection pill image, the second
         the text. Rockbox wipes a text line's background before drawing it, so the selected text line uses
         the gradient style with both ends set to the pill colour, which keeps the pill intact under it.
-        Icons come from two strips (normal / selected) indexed by %LI; %if skips rows with no icon (-1).'''
+        Icons come from two strips (normal / selected) indexed by %LI; rows with no icon (-1) get slot NOICON_ID.'''
         fh = font_h(self.fonts[1])
         ty, iy0, tx0 = (row_h - fh) // 2, (row_h - 16) // 2, pad + 26
         label, il, sl = next(self.labels), next(self.labels), next(self.labels)
+        noicon = lambda strip: f'%xd({strip}{chr(ord("a") + NOICON_ID)})'  # subimages are lettered a=0
         strips = {'icons.bmp': icon_strip(rgb(icon_fg), icon_under), 'icons_sel.bmp': icon_strip(rgb(sel_fg), pill_color)}
         self.files.update({'row.bmp': pill, **strips})
         self.head += [f'%xl({label},row.bmp,0,0)', f'%xl({il},icons.bmp,{pad},{iy0},32)',
                       f'%xl({sl},icons_sel.bmp,{pad},{iy0},32)']
         self.body += ['', f'%Vi(-,{x},{y},{w},{h},1)',
                       '', f'%Vl(r,0,0,{w},{row_h},1)',
-                      f'%?Lc<%xd({label}a)|>%?if(%LI,>=,0)<%?Lc<%xd({sl},%LI,1)|%xd({il},%LI,1)>|>',
+                      f'%?Lc<%xd({label}a)|>%?if(%LI,>=,0)<%?Lc<%xd({sl},%LI,1)|%xd({il},%LI,1)>|%?Lc<{noicon(sl)}|{noicon(il)}>>',
                       '', f'%Vl(r,{tx0},{ty},{w - pad - tx0},{fh},1)', f'%Vf({fg})',
                       f'%Vg({pill_color},{pill_color},{sel_fg})', '%s%?Lc<%Vs(gradient)|>%LT']
         f = font(self.fonts[1])
@@ -363,14 +440,16 @@ def rb(theme):
     return THEMES / theme / '.rockbox'
 
 
-def write_cfg(theme, cfg):
+def write_cfg(theme, title, cfg):
+    '''title is the .cfg file name, which is what Browse Theme Files lists.'''
     (rb(theme) / 'themes').mkdir(parents=True, exist_ok=True)
     base = {
         'wps': f'/.rockbox/wps/{theme}.wps',
         'sbs': f'/.rockbox/wps/{theme}.sbs',
         'backdrop': f'/.rockbox/backdrops/{theme}.bmp',
         'statusbar': 'top',
-        'show icons': 'off',
+        # must be on: the skinned menu picks its icon by %LI, which is -1 for every row when icons are off
+        'show icons': 'on',
         'scrollbar': 'right',
         'scrollbar width': '3',
         'iconset': '-',
@@ -378,9 +457,9 @@ def write_cfg(theme, cfg):
         'filetype colours': '-',
         'ui viewport': '-',
     }
-    lines = [f'# {theme} theme for iPod Classic, generated by src/build.py']
+    lines = [f'# {title} theme for iPod Classic, generated by src/build.py']
     lines += [f'{k}: {v}' for k, v in {**base, **cfg}.items()]
-    (rb(theme) / 'themes' / f'{theme}.cfg').write_text('\n'.join(lines) + '\n')
+    (rb(theme) / 'themes' / f'{title}.cfg').write_text('\n'.join(lines) + '\n')
 
 
 def save_backdrop(theme, img):
@@ -391,6 +470,14 @@ def save_backdrop(theme, img):
 def mp(stop, playing):
     '''%mp branches: stop, play, pause, ffwd, rewind.'''
     return f'%?mp<{stop}|{playing}|{playing}|{playing}|{playing}>'
+
+
+VOL = '%?mv(2)<{vol}|{song}>'  # %mv is true while the wheel changes volume and 2 s after
+
+
+def vol_bar(code):
+    '''Like the Apple firmware: the scrubber turns into a volume bar while the volume changes.'''
+    return VOL.format(vol=code.replace('%pb(', '%pv(', 1), song=code)
 
 
 # ---------- theme 1: Spotify ----------
@@ -442,23 +529,17 @@ def spotify():
     fill = Image.new('RGBA', (1, 10), (0, 0, 0, 0))
     for yy in range(3, 7):
         fill.putpixel((0, yy), rgb(GREEN))
-    s.line(s.bar('pb.bmp', 292, 10, fill, SONG['pos'] / SONG['len'], knob(10, rgb(WHITE))))
+    s.line(vol_bar(s.bar('pb.bmp', 292, 10, fill, SONG['pos'] / SONG['len'], knob(10, rgb(WHITE)))))
     s.vp(14, 190, 292, 10, 6, GRAY)
-    s.line(s.text(('l', '%pc', mmss(SONG['pos'])), ('r', '%pt', mmss(SONG['len']))))
+    s.line(s.text(('l', VOL.format(vol='Volume', song='%pc'), mmss(SONG['pos'])),
+                  ('r', VOL.format(vol='%pv', song='%pt'), mmss(SONG['len']))))
     s.vp(0, 202, 320, 38)
     s.line(
-        s.image('shuffle.bmp', 30, 7, [icon('shuffle', 20, rgb(GRAY), pad=6),
-                                       icon('shuffle', 20, rgb(GREEN), dot=True, pad=6)],
-                '%?ps<{b}|{a}>', show=1),
         s.image('prev.bmp', 90, 9, [icon('prev', 20, rgb(WHITE))], '{a}'),
         s.image('play.bmp', 142, 0, [disc(36, rgb(WHITE), 'play', rgb('000000')),
                                      disc(36, rgb(WHITE), 'pause', rgb('000000'))],
                 '%?mp<{a}|{b}|{a}|{b}|{b}>', show=1),
         s.image('next.bmp', 210, 9, [icon('next', 20, rgb(WHITE))], '{a}'),
-        s.image('repeat.bmp', 270, 7, [icon('repeat', 20, rgb(GRAY), pad=6),
-                                       icon('repeat', 20, rgb(GREEN), dot=True, pad=6),
-                                       icon('repeat1', 20, rgb(GREEN), dot=True, pad=6)],
-                '%?mm<{a}|{b}|{c}|{b}|{b}>', show=1),
     )
     wps_mock = s.save()
 
@@ -478,8 +559,10 @@ def spotify():
     lb = s.ui(12, 32, 300, 168, 24, to565(pill, dither=False), pc, WHITE, GREEN, GRAY, '101010')
     s.vp(12, 7, 200, 18, 2, WHITE)
     s.line(lb + s.text(('l', '%?Lt<%Lt|Rockbox>', 'Rockbox')))
-    s.vp(210, 10, 100, 12, 5, GRAY)
+    s.vp(196, 10, 86, 12, 5, GRAY)
     s.line(s.text(('r', '%cH:%cM  %bl%%', '14:27  82%')))
+    s.vp(286, 10, 24, 12)
+    s.line(s.image('battery.bmp', 0, 0, *battery(rgb(GRAY)), show=8))
     s.vp(38, 209, 236, 12, 4, WHITE)
     s.line(s.text(('l', mp('Nothing playing', '%?it<%it|%fn>'), SONG['title'])))
     s.vp(38, 221, 236, 12, 5, GRAY)
@@ -490,7 +573,7 @@ def spotify():
     s.vp(12, 234, 296, 1)
     s.line(s.bar('pbmini.bmp', 296, 1, Image.new('RGBA', (1, 1), rgb(GREEN)), SONG['pos'] / SONG['len']))
     menu_mock = s.save()
-    write_cfg('spotify', cfg)
+    write_cfg('spotify', 'Spotify', cfg)
     return wps_mock, menu_mock
 
 
@@ -528,7 +611,6 @@ def glass_panel(bg, box, r, tint=0.16):
 
 def glass():
     WHITE, SOFT, DIM = 'FFFFFF', 'E4E8FF', 'B9C1E6'
-    OFF = (255, 255, 255, 115)
     cfg = {
         'font': '/.rockbox/fonts/15-Adobe-Helvetica.fnt',
         'foreground color': WHITE,
@@ -546,8 +628,6 @@ def glass():
     # Now Playing
     bg = glass_panel(base, (8, 24, 311, 183), 16)
     bg = glass_panel(bg, (64, 192, 255, 233), 20, 0.2)
-    bg = glass_panel(bg, (12, 195, 47, 230), 17, 0.12)
-    bg = glass_panel(bg, (272, 195, 307, 230), 17, 0.12)
     sh = Image.new('RGBA', bg.size, (0, 0, 0, 0))
     ImageDraw.Draw(sh).rectangle((20, 39, 131, 150), fill=(0, 0, 20, 120))
     bg = Image.alpha_composite(bg, sh.filter(ImageFilter.GaussianBlur(4)))  # art drop shadow
@@ -559,8 +639,10 @@ def glass():
     s = Skin('glass', 'wps', bg, fonts, ui_font)
     s.vp(14, 5, 80, 14, 4, WHITE)
     s.line(s.text(('l', '%cH:%cM', '14:27')))
-    s.vp(226, 6, 82, 12, 5, WHITE)
+    s.vp(226, 6, 54, 12, 5, WHITE)
     s.line(s.text(('r', '%bl%%', '82%')))
+    s.vp(284, 6, 24, 12)
+    s.line(s.image('battery.bmp', 0, 0, *battery(rgb(WHITE)), show=8))
     s.vp(20, 36, 112, 112)
     noart = Image.new('RGBA', (112, 112), (255, 255, 255, 40))
     noart.alpha_composite(icon('note', 48, (255, 255, 255, 190)), (32, 32))
@@ -579,20 +661,16 @@ def glass():
     fill = Image.new('RGBA', (1, 10), (0, 0, 0, 0))
     for yy in range(4, 7):
         fill.putpixel((0, yy), (255, 255, 255, 245))
-    s.line(s.bar('pb.bmp', 280, 10, fill, SONG['pos'] / SONG['len'], knob(10, rgb(WHITE))))
+    s.line(vol_bar(s.bar('pb.bmp', 280, 10, fill, SONG['pos'] / SONG['len'], knob(10, rgb(WHITE)))))
     s.vp(20, 164, 280, 10, 6, 'D6DCF5')
-    s.line(s.text(('l', '%pc', mmss(SONG['pos'])), ('r', '-%pr', '-' + mmss(SONG['len'] - SONG['pos']))))
+    s.line(s.text(('l', VOL.format(vol='Volume', song='%pc'), mmss(SONG['pos'])),
+                  ('r', VOL.format(vol='%pv', song='-%pr'), '-' + mmss(SONG['len'] - SONG['pos']))))
     s.vp(0, 190, 320, 48)
     s.line(
-        s.image('shuffle.bmp', 21, 14, [icon('shuffle', 18, OFF), icon('shuffle', 18, rgb(WHITE))],
-                '%?ps<{b}|{a}>', show=1),
         s.image('prev.bmp', 93, 12, [icon('prev', 22, rgb(WHITE))], '{a}'),
         s.image('play.bmp', 145, 8, [icon('play', 30, rgb(WHITE)), icon('pause', 30, rgb(WHITE))],
                 '%?mp<{a}|{b}|{a}|{b}|{b}>', show=1),
         s.image('next.bmp', 205, 12, [icon('next', 22, rgb(WHITE))], '{a}'),
-        s.image('repeat.bmp', 281, 14, [icon('repeat', 18, OFF), icon('repeat', 18, rgb(WHITE)),
-                                        icon('repeat1', 18, rgb(WHITE))],
-                '%?mm<{a}|{b}|{c}|{b}|{b}>', show=1),
     )
     wps_mock = s.save()
 
@@ -608,8 +686,10 @@ def glass():
     lb = s.ui(16, 31, 288, 168, 24, pill, pc, WHITE, '1A1F4A', WHITE)
     s.vp(16, 6, 200, 14, 4, WHITE)
     s.line(lb + s.text(('l', '%?Lt<%Lt|Rockbox>', 'Rockbox')))
-    s.vp(200, 7, 108, 12, 5, WHITE)
+    s.vp(176, 7, 104, 12, 5, WHITE)
     s.line(s.text(('r', '%cH:%cM   %bl%%', '14:27   82%')))
+    s.vp(284, 7, 24, 12)
+    s.line(s.image('battery_menu.bmp', 0, 0, *battery(rgb(WHITE)), show=8))
     s.vp(16, 212, 22, 22)
     s.line(s.image('mini.bmp', 3, 4, [icon('play', 14, rgb(WHITE)), icon('pause', 14, rgb(WHITE))],
                    '%?mp<{a}|{b}|{a}|{b}|{b}>', show=1))
@@ -618,7 +698,7 @@ def glass():
     s.vp(256, 217, 46, 12, 5, 'D6DCF5')
     s.line(s.text(('r', mp('', '%pc'), mmss(SONG['pos']))))
     menu_mock = s.save()
-    write_cfg('glass', cfg)
+    write_cfg('glass', 'Apple Liquid Glass', cfg)
     return wps_mock, menu_mock
 
 

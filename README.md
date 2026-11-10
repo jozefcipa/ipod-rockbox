@@ -21,6 +21,7 @@ themes/<name>/.rockbox/   each theme as a ready-to-copy .rockbox tree
 src/build.py              generates spotify + glass (skins, bitmaps, cfg, previews)
 src/bdf/                  Rockbox fonts as BDF, used to render accurate previews
 preview/                  mockups of spotify + glass
+settings/*.cfg            personal Rockbox settings (click sound, main menu)
 justfile                  all the commands below
 ```
 
@@ -37,7 +38,7 @@ The third-party themes were unpacked as-is from their release zips. Each has a `
 ## Requirements
 
 - macOS with [`just`](https://github.com/casey/just) (`brew install just`), Python 3 and Xcode command line tools (`xcode-select --install`, used to build the bootloader installer)
-- **The iPod must be FAT32 ("WinPod").** Rockbox can't run from an HFS+ ("MacPod") iPod, and an iPod restored with Finder or iTunes on a Mac is HFS+. Plug it in and run `just status`: `File System Personality` must say `MS-DOS FAT32`. If it doesn't, restore it from iTunes **on Windows** (a VM works), which formats it as FAT32. See [IpodConversionToFAT32](https://www.rockbox.org/wiki/IpodConversionToFAT32).
+- **The iPod must be FAT32 ("WinPod").** Rockbox can't run from an HFS+ ("MacPod") iPod, and an iPod restored with Finder or iTunes on a Mac is HFS+. Plug it in and run `just status`: `File System Personality` must say `MS-DOS FAT32`. If it says HFS+, see [Converting a Mac-formatted iPod to FAT32 on macOS](#converting-a-mac-formatted-ipod-to-fat32-on-macos) (no Windows needed).
 - **Supported Apple firmware.** The bootloader installer checks the Apple firmware version (Settings > About on the iPod):
 
   | Model | Firmware |
@@ -66,6 +67,31 @@ If `mks5lboot` can't access USB, run `sudo .cache/mks5lboot --bl-inst .cache/boo
 
 Prefer a GUI? [Rockbox Utility](https://www.rockbox.org/wiki/RockboxUtility) can do the `just rockbox` part on macOS. The bootloader for this model still has to go through `mks5lboot`.
 
+### Converting a Mac-formatted iPod to FAT32 on macOS
+
+Tested on this iPod (iFlash, 128 GB, restored with Finder). If you install the bootloader on an HFS+ iPod, Rockbox stops with `PANIC: mount: 0`. Nothing is broken; it just can't read HFS+.
+
+The trick is to format **from the bootloader's view of the disk**. Under the Rockbox bootloader, the disk shows its real partition table: a 200 MB Apple firmware partition and a data partition already typed `Windows_FAT_32` with HFS+ inside. Under the Apple firmware's disk mode the data partition appears 256 KB larger, so don't format from there.
+
+1. Back up your music: boot the Apple firmware (hold MENU at boot), plug in, copy `iPod_Control/Music` off. Rockbox reads tags, so the scrambled file names don't matter.
+2. Install the bootloader (`just bootloader`) if you haven't yet.
+3. Boot the iPod (it shows the mount panic), plug it in, and it switches to **bootloader USB mode**. Or hold SELECT + RIGHT at boot.
+4. In your own terminal (it needs **Full Disk Access** in System Settings > Privacy & Security), find the iPod. Look for `FDisk_partition_scheme`, with the large `Windows_FAT_32` partition as `diskNs1`:
+
+   ```
+   diskutil list external physical
+   ```
+
+5. Format only that partition. FAT32 with 4096-byte sectors, matching the iPod, and 32 KB clusters:
+
+   ```
+   sudo newfs_msdos -F 32 -S 4096 -c 8 -v IPOD /dev/rdiskNs1
+   ```
+
+6. Replug. It mounts as `IPOD`. Run `just rockbox`, then `just flash`, and copy the music into any folder.
+
+After this the Apple firmware may no longer accept the disk, so booting it and syncing with Finder can stop working. To get those back, run `just uninstall-bootloader` and restore the iPod in Finder.
+
 ## Install themes
 
 With Rockbox running, plug the iPod in. It enters USB mode and mounts as a disk.
@@ -87,10 +113,13 @@ just uninstall interpod
 just backup            # copy the iPod's .rockbox to backups/<timestamp>
 just restore backups/20261109-201500
 just fonts             # (re)install the standard fonts pack
+just settings          # copy settings/*.cfg to the iPod (flash does this too)
 just eject
 ```
 
 The iPod is auto-detected as the first `/Volumes/*` with `iPod_Control` or `.rockbox`. Override it with `IPOD=/Volumes/NAME just ...`.
+
+`just flash` also copies `settings/my-settings.cfg`. Load it once on the iPod: **Settings > Manage Settings > Browse .cfg Files**. A `.cfg` only changes the settings it lists. To capture more settings, change them on the iPod, run `just backup`, find the lines in `backups/<timestamp>/config.cfg`, and add them to the file.
 
 For album art, put a `cover.jpg` (baseline, not progressive) or `cover.bmp` in each album folder.
 

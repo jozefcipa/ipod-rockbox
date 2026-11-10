@@ -33,8 +33,12 @@ status: _need-ipod
     @grep -E '^(Target|Version)' '{{ ipod }}/.rockbox/rockbox-info.txt' 2>/dev/null || echo 'Rockbox: not installed'
     @ls '{{ ipod }}/.rockbox/themes' 2>/dev/null || true
 
-# Build, back up, copy themes to the iPod and eject (default: all themes)
-flash *names: build backup (install names) && eject
+# Build, back up, copy themes + settings to the iPod and eject (default: all themes)
+flash *names: build backup (install names) settings && eject
+
+# Copy settings/*.cfg into .rockbox, load them on the iPod via Manage Settings > Browse .cfg Files
+settings: _need-ipod
+    cp -X settings/*.cfg '{{ ipod }}/.rockbox/'
 
 # Copy themes onto the iPod, merging into .rockbox (default: all themes)
 install *names: _need-ipod
@@ -75,7 +79,7 @@ eject: _need-ipod
 setup: rockbox bootloader
 
 # Download Rockbox + the standard fonts and unpack onto the iPod (ROCKBOX=daily for nightly)
-rockbox: _need-ipod fonts
+rockbox: _need-fat32 fonts
     just _fetch '{{ rb_url }}'
     unzip -oq ".cache/$(basename '{{ rb_url }}')" -d '{{ ipod }}'
     @grep -E '^(Target|Version)' '{{ ipod }}/.rockbox/rockbox-info.txt'
@@ -100,15 +104,20 @@ uninstall-bootloader: _mks5lboot
 _need-ipod:
     @[ -n '{{ ipod }}' ] && [ -d '{{ ipod }}' ] || { echo 'No iPod mounted. Plug it in (Rockbox and Apple disk mode both mount it) or set IPOD=/Volumes/NAME'; exit 1; }
 
+# Rockbox can't boot from HFS+ (Finder/Mac-restored iPods), only FAT32 (iTunes on Windows)
+[private]
+_need-fat32: _need-ipod
+    @diskutil info '{{ ipod }}' | grep -q 'FAT32' || { echo 'iPod is not FAT32 (Mac-formatted?). Rockbox will not boot from it. Restore it with iTunes on Windows first, see README.'; exit 1; }
+
 [private]
 _fetch url:
     mkdir -p .cache
     [ -f ".cache/$(basename '{{ url }}')" ] || curl -fL --progress-bar -o ".cache/$(basename '{{ url }}')" '{{ url }}'
 
+# ponytail: matches the 'DFU device state' line mks5lboot prints, adjust if a future version words it differently
 [private]
 _wait-dfu:
     @echo 'Quit Music/iTunes. On the iPod: hold SELECT+MENU ~12s until the screen stays black (DFU mode). Waiting...'
-    # ponytail: matches the 'DFU device state' line mks5lboot prints, adjust if a future version words it differently
     until {{ mks5lboot }} --dfuscan 2>&1 | grep -q 'state'; do sleep 1; done
     @echo 'DFU device found'
 

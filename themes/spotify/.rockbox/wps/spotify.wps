@@ -9,11 +9,9 @@
 %Cl(0,0,140,140,c,c)
 %xl(A,noart.bmp,0,0,1)
 %xl(B,knob.bmp)
-%xl(C,shuffle.bmp,30,7,2)
-%xl(D,prev.bmp,90,9,1)
-%xl(E,play.bmp,142,0,2)
-%xl(F,next.bmp,210,9,1)
-%xl(G,repeat.bmp,270,7,3)
+%xl(C,prev.bmp,90,9,1)
+%xl(D,play.bmp,142,0,2)
+%xl(E,next.bmp,210,9,1)
 
 %V(40,9,240,10,4)
 %Vf(B3B3B3)
@@ -49,12 +47,12 @@
 
 %V(14,178,292,10,1)
 %Vf(FFFFFF)
-%pb(0,0,292,10,pb.bmp,slider,B)
+%?mv(2)<%pv(0,0,292,10,pb.bmp,slider,B)|%pb(0,0,292,10,pb.bmp,slider,B)>
 
 %V(14,190,292,10,6)
 %Vf(B3B3B3)
-%s%al%pc%ar%pt
+%s%al%?mv(2)<Volume|%pc>%ar%?mv(2)<%pv|%pt>
 
 %V(0,202,320,38,1)
 %Vf(FFFFFF)
-%?ps<%xd(Cb)|%xd(Ca)>%xd(Da)%?mp<%xd(Ea)|%xd(Eb)|%xd(Ea)|%xd(Eb)|%xd(Eb)>%xd(Fa)%?mm<%xd(Ga)|%xd(Gb)|%xd(Gc)|%xd(Gb)|%xd(Gb)>
+%xd(Ca)%?mp<%xd(Da)|%xd(Db)|%xd(Da)|%xd(Db)|%xd(Db)>%xd(Ea)

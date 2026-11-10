@@ -5,12 +5,13 @@
 %xl(A,row.bmp,0,0)
 %xl(B,icons.bmp,12,4,32)
 %xl(C,icons_sel.bmp,12,4,32)
-%xl(D,mini.bmp,2,2,2)
+%xl(D,battery.bmp,0,0,12)
+%xl(E,mini.bmp,2,2,2)
 
 %Vi(-,12,32,300,168,1)
 
 %Vl(r,0,0,300,24,1)
-%?Lc<%xd(Aa)|>%?if(%LI,>=,0)<%?Lc<%xd(C,%LI,1)|%xd(B,%LI,1)>|>
+%?Lc<%xd(Aa)|>%?if(%LI,>=,0)<%?Lc<%xd(C,%LI,1)|%xd(B,%LI,1)>|%?Lc<%xd(Ci)|%xd(Bi)>>
 
 %Vl(r,38,4,250,15,1)
 %Vf(FFFFFF)
@@ -21,9 +22,13 @@
 %Vf(FFFFFF)
 %Lb(r,300,24)%s%al%?Lt<%Lt|Rockbox>
 
-%V(210,10,100,12,5)
+%V(196,10,86,12,5)
 %Vf(B3B3B3)
 %s%ar%cH:%cM  %bl%%
+
+%V(286,10,24,12,1)
+%Vf(FFFFFF)
+%?bp<%xd(Dl)|%?bl<%xd(Da)|%xd(Db)|%xd(Dc)|%xd(Dd)|%xd(De)|%xd(Df)|%xd(Dg)|%xd(Dh)|%xd(Di)|%xd(Dj)|%xd(Dk)>>
 
 %V(38,209,236,12,4)
 %Vf(FFFFFF)
@@ -35,7 +40,7 @@
 
 %V(284,211,20,20,1)
 %Vf(FFFFFF)
-%?mp<%xd(Da)|%xd(Db)|%xd(Da)|%xd(Db)|%xd(Db)>
+%?mp<%xd(Ea)|%xd(Eb)|%xd(Ea)|%xd(Eb)|%xd(Eb)>
 
 %V(12,234,296,1,1)
 %Vf(FFFFFF)
